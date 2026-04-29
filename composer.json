@@ -1,5 +1,5 @@
 {
-    "name": "druidvav/sf-sentry-extension-bundle",
+    "name": "druidvav/sentry-extension-bundle",
     "description": "Symfony bundle that enriches Sentry context from custom exceptions and Guzzle HTTP errors",
     "type": "symfony-bundle",
     "license": "MIT",
