@@ -1,0 +1,37 @@
+{
+    "name": "druidvav/sf-sentry-extension-bundle",
+    "description": "Symfony bundle that enriches Sentry context from custom exceptions and Guzzle HTTP errors",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.0",
+        "symfony/framework-bundle": "^5.4 || ^6.4",
+        "sentry/sentry-symfony": "^4.0"
+    },
+    "require-dev": {
+        "guzzlehttp/guzzle": "^7.0",
+        "phpunit/phpunit": "^9.5 || ^10.0",
+        "symfony/http-client": "^5.4 || ^6.4"
+    },
+    "suggest": {
+        "guzzlehttp/guzzle": "Required to enrich Sentry context from Guzzle HTTP exceptions"
+    },
+    "autoload": {
+        "psr-4": {
+            "Druidvav\\SentryExtensionBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Druidvav\\SentryExtensionBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "symfony": {
+            "require": "^5.4 || ^6.4"
+        }
+    }
+}
