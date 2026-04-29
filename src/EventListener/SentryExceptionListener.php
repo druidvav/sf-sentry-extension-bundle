@@ -5,26 +5,20 @@ declare(strict_types=1);
 namespace Druidvav\SentryExtensionBundle\EventListener;
 
 use Druidvav\SentryExtensionBundle\Contract\SentryAwareException;
-use Sentry\Event;
-use Sentry\EventHint;
-use Sentry\Options;
+use GuzzleHttp\Exception\RequestException as GuzzleRequestException;
 use Sentry\State\HubInterface;
 use Sentry\State\Scope;
 use Throwable;
 
-/**
- * Enriches Sentry events with context from SentryAwareException and Guzzle exceptions.
- */
 class SentryExceptionListener
 {
-    private HubInterface $hub;
+    private const BODY_SIZE_LIMIT = 1024;
+
     private bool $guzzleAvailable;
 
-    public function __construct(HubInterface $hub)
+    public function __construct(private readonly HubInterface $hub)
     {
-        $this->hub = $hub;
-        $this->guzzleAvailable = interface_exists(\GuzzleHttp\Exception\RequestException::class)
-            || class_exists(\GuzzleHttp\Exception\RequestException::class);
+        $this->guzzleAvailable = class_exists(GuzzleRequestException::class);
     }
 
     public function onException(Throwable $exception): void
@@ -42,7 +36,7 @@ class SentryExceptionListener
             }
         }
 
-        if ($this->guzzleAvailable) {
+        if ($this->guzzleAvailable && $exception instanceof GuzzleRequestException) {
             $this->enrichFromGuzzle($scope, $exception);
         }
 
@@ -51,27 +45,39 @@ class SentryExceptionListener
         }
     }
 
-    private function enrichFromGuzzle(Scope $scope, Throwable $exception): void
+    private function enrichFromGuzzle(Scope $scope, GuzzleRequestException $exception): void
     {
-        if (!$exception instanceof \GuzzleHttp\Exception\RequestException) {
-            return;
-        }
-
         $request = $exception->getRequest();
         $scope->setExtra('guzzle.request.method', $request->getMethod());
         $scope->setExtra('guzzle.request.uri', (string) $request->getUri());
         $scope->setExtra('guzzle.request.headers', $this->sanitizeHeaders($request->getHeaders()));
+
+        $requestBody = $this->readBody((string) $request->getBody());
+        if ($requestBody !== null) {
+            $scope->setExtra('guzzle.request.body', $requestBody);
+        }
 
         $response = $exception->getResponse();
         if ($response !== null) {
             $scope->setExtra('guzzle.response.status_code', $response->getStatusCode());
             $scope->setExtra('guzzle.response.headers', $this->sanitizeHeaders($response->getHeaders()));
 
-            $body = (string) $response->getBody();
-            if ($body !== '') {
-                $scope->setExtra('guzzle.response.body', mb_substr($body, 0, 4096));
+            $responseBody = $this->readBody((string) $response->getBody());
+            if ($responseBody !== null) {
+                $scope->setExtra('guzzle.response.body', $responseBody);
             }
         }
+    }
+
+    private function readBody(string $body): ?string
+    {
+        if ($body === '') {
+            return null;
+        }
+        if (strlen($body) > self::BODY_SIZE_LIMIT) {
+            return null;
+        }
+        return $body;
     }
 
     /**
@@ -80,12 +86,11 @@ class SentryExceptionListener
      */
     private function sanitizeHeaders(array $headers): array
     {
-        $result = [];
         $sensitive = ['authorization', 'x-api-key', 'cookie', 'set-cookie'];
+        $result = [];
 
         foreach ($headers as $name => $values) {
-            $lower = strtolower($name);
-            $result[$name] = in_array($lower, $sensitive, true)
+            $result[$name] = in_array(strtolower($name), $sensitive, true)
                 ? '[redacted]'
                 : implode(', ', $values);
         }
