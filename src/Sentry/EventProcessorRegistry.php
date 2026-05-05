@@ -18,7 +18,7 @@ class EventProcessorRegistry
     public function register(): void
     {
         foreach ($this->processors as $processor) {
-            \Sentry\addGlobalEventProcessor($processor);
+            \Sentry\State\Scope::addGlobalEventProcessor($processor);
         }
     }
 }
