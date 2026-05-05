@@ -18,13 +18,7 @@ class EventProcessorRegistry
     public function register(): void
     {
         foreach ($this->processors as $processor) {
-            if (method_exists(\Sentry\State\Scope::class, 'addGlobalEventProcessor')) {
-                // sentry-php v3 / sentry-symfony ^4.0
-                \Sentry\State\Scope::addGlobalEventProcessor($processor);
-            } elseif (function_exists('\Sentry\addGlobalEventProcessor')) {
-                // sentry-php v4 / sentry-symfony ^5.0
-                \Sentry\addGlobalEventProcessor($processor);
-            }
+            \Sentry\State\Scope::addGlobalEventProcessor($processor);
         }
     }
 }
