@@ -9,7 +9,7 @@ use Druidvav\SentryExtensionBundle\Sentry\EventProcessorRegistry;
 use Druidvav\SentryExtensionBundle\Sentry\SentryExceptionContextProcessor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 
 class SentryExtensionExtension extends Extension
 {
